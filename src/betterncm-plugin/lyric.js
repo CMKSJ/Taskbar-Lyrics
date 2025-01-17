@@ -16,7 +16,7 @@ plugin.onLoad(async () => {
 		"basic": "",
 		"extra": ""
 	};
-	const delta = "        ";
+	const delta = "        \u200B";
 
 
     // 监视软件内歌词变动
@@ -30,10 +30,10 @@ plugin.onLoad(async () => {
                 };
 
                 if (mutation.addedNodes[2]) {
-                    lyrics.basic = mutation.addedNodes[0].firstChild.textContent;
-                    lyrics.extra = delta + mutation.addedNodes[2].firstChild ? mutation.addedNodes[2].firstChild.textContent : "";
+                    lyrics.basic = mutation.addedNodes[0].firstChild.textContent + delta;
+                    lyrics.extra = mutation.addedNodes[2].firstChild ? delta + mutation.addedNodes[2].firstChild.textContent : "";
                 } else {
-                    lyrics.basic = mutation.addedNodes[0].textContent;
+                    lyrics.basic = mutation.addedNodes[0].textContent + delta;
                 }
 
                 TaskbarLyricsAPI.lyrics.lyrics(lyrics);
@@ -60,7 +60,7 @@ plugin.onLoad(async () => {
 
         // 发送歌曲信息
 		lyrics = {
-			"basic": name,
+			"basic": name + delta,
             "extra": delta + artistName
 		};
         TaskbarLyricsAPI.lyrics.lyrics(lyrics);
@@ -179,7 +179,10 @@ plugin.onLoad(async () => {
 							lyrics.extra = "";
 							break;
 					}
-					if(extra_show_value) {
+					if(lyrics.basic) {
+						lyrics.basic = lyrics.basic + delta;
+					}
+					if(lyrics.extra) {
 						lyrics.extra = delta + lyrics.extra;
 					}
 
