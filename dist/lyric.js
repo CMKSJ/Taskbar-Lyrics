@@ -16,23 +16,24 @@ plugin.onLoad(async () => {
 		"basic": "",
 		"extra": ""
 	};
+	const delta = "        \u200B";
 
 
     // 监视软件内歌词变动
     const watchLyricsChange = async () => {
         const mLyric = await betterncm.utils.waitForElement("#x-g-mn .m-lyric");
         const MutationCallback = mutations => {
-            for (const mutation of mutations) {
+            for (const mutation of mutations) {				
                 lyrics = {
                     basic: "",
                     extra: ""
                 };
 
                 if (mutation.addedNodes[2]) {
-                    lyrics.basic = mutation.addedNodes[0].firstChild.textContent;
-                    lyrics.extra = mutation.addedNodes[2].firstChild ? mutation.addedNodes[2].firstChild.textContent : "";
+                    lyrics.basic = mutation.addedNodes[0].firstChild.textContent + delta;
+                    lyrics.extra = mutation.addedNodes[2].firstChild ? delta + mutation.addedNodes[2].firstChild.textContent : "";
                 } else {
-                    lyrics.basic = mutation.addedNodes[0].textContent;
+                    lyrics.basic = mutation.addedNodes[0].textContent + delta;
                 }
 
                 TaskbarLyricsAPI.lyrics.lyrics(lyrics);
@@ -58,10 +59,11 @@ plugin.onLoad(async () => {
         artistName = artistName.slice(3);
 
         // 发送歌曲信息
-        TaskbarLyricsAPI.lyrics.lyrics({
-            "basic": name,
-            "extra": artistName
-        });
+		lyrics = {
+			"basic": name + delta,
+            "extra": delta + artistName
+		};
+        TaskbarLyricsAPI.lyrics.lyrics(lyrics);
 
 
         // 解析歌词
@@ -93,8 +95,8 @@ plugin.onLoad(async () => {
         // 纯音乐只显示歌曲名与作曲家
         if (
             (parsedLyric.length == 1)
-            && (parsedLyric[0].time == 0)
-            && (parsedLyric[0].duration != 0)
+            // && (parsedLyric[0].time == 0)
+            // && (parsedLyric[0].duration != 0)
         ) {
             parsedLyric = [];
         }
@@ -116,72 +118,79 @@ plugin.onLoad(async () => {
 			}
 			laststatus = status;
 		}
-		
-        const adjust = Number(pluginConfig.get("effect")["adjust"]);
-        if (parsedLyric) {
-            let nextIndex = parsedLyric.findIndex(item => item.time > (time + adjust) * 1000);
-            nextIndex = (nextIndex <= -1) ? parsedLyric.length : nextIndex;
+		else if(status == 2) {
+			const adjust = Number(pluginConfig.get("effect")["adjust"]);
+			if (parsedLyric) {
+				let nextIndex = parsedLyric.findIndex(item => item.time > (time + adjust) * 1000);
+				nextIndex = (nextIndex <= -1) ? parsedLyric.length : nextIndex;
 
-            if (nextIndex != currentIndex) {
-                const currentLyric = parsedLyric[nextIndex - 1] ?? "";
-                const nextLyric = parsedLyric[nextIndex] ?? "";
+				if (nextIndex != currentIndex) {
+					const currentLyric = parsedLyric[nextIndex - 1] ?? "";
+					const nextLyric = parsedLyric[nextIndex] ?? "";
 
-                lyrics = {
-                    "basic": currentLyric?.originalLyric ?? "",
-                    "extra": currentLyric?.translatedLyric ?? nextLyric?.originalLyric ?? ""
-                };
+					lyrics = {
+						"basic": currentLyric?.originalLyric ?? "",
+						"extra": currentLyric?.translatedLyric ?? nextLyric?.originalLyric ?? ""
+					};
 
-                const extra_show_value = pluginConfig.get("effect")["extra_show"]["value"];
-                switch (extra_show_value) {
-                    case 3:
-                        if (currentLyric?.romanLyric) {
-                            lyrics.extra = currentLyric?.romanLyric
-                            break;
-                        }
+					const extra_show_value = pluginConfig.get("effect")["extra_show"]["value"];
+					switch (extra_show_value) {
+						case 3:
+							if (currentLyric?.romanLyric) {
+								lyrics.extra = currentLyric?.romanLyric;
+								break;
+							}
 
-                    case 2:
-                        if (currentLyric?.translatedLyric) {
-                            lyrics.extra = currentLyric?.translatedLyric
-                            break;
-                        }
+						case 2:
+							if (currentLyric?.translatedLyric) {
+								lyrics.extra = currentLyric?.translatedLyric;
+								break;
+							}
 
-                    case 1:
-                        if (nextLyric?.originalLyric) {
-                            const next_line_lyrics_position_value = pluginConfig.get("effect")["next_line_lyrics_position"]["value"];
-                            switch (next_line_lyrics_position_value) {
-                                case 0:
-                                    lyrics.extra = nextLyric?.originalLyric;
-                                    break;
+						case 1:
+							if (nextLyric?.originalLyric) {
+								const next_line_lyrics_position_value = pluginConfig.get("effect")["next_line_lyrics_position"]["value"];
+								switch (next_line_lyrics_position_value) {
+									case 0:
+										lyrics.extra = nextLyric?.originalLyric;
+										break;
 
-                                case 1:
-                                    lyrics.basic = nextLyric?.originalLyric;
-                                    lyrics.extra = currentLyric?.originalLyric;
-                                    break;
+									case 1:
+										lyrics.basic = nextLyric?.originalLyric;
+										lyrics.extra = currentLyric?.originalLyric;
+										break;
 
-                                case 2:
-                                    if (currentLine == 0) {
-                                        lyrics.basic = currentLyric?.originalLyric;
-                                        lyrics.extra = nextLyric?.originalLyric;
-                                        currentLine = 1;
-                                    } else {
-                                        lyrics.basic = nextLyric?.originalLyric;
-                                        lyrics.extra = currentLyric?.originalLyric;
-                                        currentLine = 0;
-                                    }
-                                    break;
-                            }
-                            break;
-                        }
+									case 2:
+										if (currentLine == 0) {
+											lyrics.basic = currentLyric?.originalLyric;
+											lyrics.extra = nextLyric?.originalLyric;
+											currentLine = 1;
+										} else {
+											lyrics.basic = nextLyric?.originalLyric;
+											lyrics.extra = currentLyric?.originalLyric;
+											currentLine = 0;
+										}
+										break;
+								}
+								break;
+							}
 
-                    case 0:
-                        lyrics.extra = "";
-                        break;
-                }
+						case 0:
+							lyrics.extra = "";
+							break;
+					}
+					if(lyrics.basic) {
+						lyrics.basic = lyrics.basic + delta;
+					}
+					if(lyrics.extra) {
+						lyrics.extra = delta + lyrics.extra;
+					}
 
-                TaskbarLyricsAPI.lyrics.lyrics(lyrics);
-                currentIndex = nextIndex;
-            }
-        }
+					TaskbarLyricsAPI.lyrics.lyrics(lyrics);
+					currentIndex = nextIndex;
+				}
+			}
+		}
     }
 
 
