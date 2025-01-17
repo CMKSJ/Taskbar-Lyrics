@@ -16,13 +16,14 @@ plugin.onLoad(async () => {
 		"basic": "",
 		"extra": ""
 	};
+	const delta = "        ";
 
 
     // 监视软件内歌词变动
     const watchLyricsChange = async () => {
         const mLyric = await betterncm.utils.waitForElement("#x-g-mn .m-lyric");
         const MutationCallback = mutations => {
-            for (const mutation of mutations) {
+            for (const mutation of mutations) {				
                 lyrics = {
                     basic: "",
                     extra: ""
@@ -30,7 +31,7 @@ plugin.onLoad(async () => {
 
                 if (mutation.addedNodes[2]) {
                     lyrics.basic = mutation.addedNodes[0].firstChild.textContent;
-                    lyrics.extra = mutation.addedNodes[2].firstChild ? mutation.addedNodes[2].firstChild.textContent : "";
+                    lyrics.extra = delta + mutation.addedNodes[2].firstChild ? mutation.addedNodes[2].firstChild.textContent : "";
                 } else {
                     lyrics.basic = mutation.addedNodes[0].textContent;
                 }
@@ -58,10 +59,10 @@ plugin.onLoad(async () => {
         artistName = artistName.slice(3);
 
         // 发送歌曲信息
-        lyrics = {
-		"basic": name,
-            	"extra": artistName
-	};
+		lyrics = {
+			"basic": name,
+            "extra": delta + artistName
+		};
         TaskbarLyricsAPI.lyrics.lyrics(lyrics);
 
 
@@ -136,13 +137,13 @@ plugin.onLoad(async () => {
                 switch (extra_show_value) {
                     case 3:
                         if (currentLyric?.romanLyric) {
-                            lyrics.extra = currentLyric?.romanLyric
+                            lyrics.extra = currentLyric?.romanLyric;
                             break;
                         }
 
                     case 2:
                         if (currentLyric?.translatedLyric) {
-                            lyrics.extra = currentLyric?.translatedLyric
+                            lyrics.extra = currentLyric?.translatedLyric;
                             break;
                         }
 
@@ -178,6 +179,9 @@ plugin.onLoad(async () => {
                         lyrics.extra = "";
                         break;
                 }
+				if(extra_show_value) {
+					lyrics.extra = delta + lyrics.extra;
+				}
 
                 TaskbarLyricsAPI.lyrics.lyrics(lyrics);
                 currentIndex = nextIndex;
